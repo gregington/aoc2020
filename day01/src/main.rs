@@ -17,6 +17,28 @@ fn part1() {
     }
 }
 
+fn part2() {
+    let lines = read_lines("input.txt").unwrap();
+    let nums_iter = lines.map(|line| line.unwrap().parse::<i32>().unwrap());
+    let nums_set: HashSet<i32> = HashSet::from_iter(nums_iter);
+
+    for num1 in nums_set.iter() {
+        for num2 in nums_set.iter() {
+            if num1 == num2 {
+                continue;
+            }
+            let target = 2020 - num1 - num2;
+            if target == *num1 || target == *num2 {
+                continue;
+            }
+            if nums_set.contains(&target) {
+                println!("{}", num1 * num2 * target);
+                return;
+            }
+        }
+    }
+}
+
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where P: AsRef<Path>, {
     let file = File::open(filename)?;
@@ -29,7 +51,7 @@ fn main() {
 
     match part {
         1 => part1(),
-        2 => println!("Part 2"),
+        2 => part2(),
         _ => println!("Invalid part number"),
     }
 }
