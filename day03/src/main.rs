@@ -6,12 +6,28 @@ use std::path::Path;
 use std::vec::Vec;
 
 fn part1(map: &Vec<Vec<char>>) {
+    let tree_count = count_trees(map, 3, 1);
+    println!("{tree_count}");
+}
+
+fn part2(map: &Vec<Vec<char>>) {
+    let tree_count = count_trees(map, 1, 1)
+        * count_trees(map, 3, 1)
+        * count_trees(map, 5, 1)
+        * count_trees(map, 7, 1)
+        * count_trees(map, 1, 2);
+        
+    println!("{tree_count}");
+}
+
+fn count_trees(map: &Vec<Vec<char>>, col_stride: usize, row_stride: usize) -> i64
+{
     let mut col = 0;
     let mut row = 0;
-    let mut tree_count = 0;
 
     let max_cols = map.get(0).unwrap().len();
     let max_row = map.len();
+    let mut tree_count = 0;
 
     while row < max_row {
         let c = *map.get(row).unwrap().get(col % max_cols).unwrap();
@@ -20,15 +36,11 @@ fn part1(map: &Vec<Vec<char>>) {
             tree_count += 1;
         }
 
-        col += 3;
-        row += 1
+        col += col_stride;
+        row += row_stride;
     }
 
-    println!("{tree_count}");
-}
-
-fn part2(_map: &Vec<Vec<char>>) {
-    println!("Part 2");
+    tree_count    
 }
 
 fn read_map(filename: &str) -> Vec<Vec<char>> {
@@ -50,8 +62,6 @@ fn main() {
     if args.len() > 2 {
         filename = &args[2];
     }
-
-    println!("{filename}");
 
     let map: Vec<Vec<char>> = read_map(filename); 
 
