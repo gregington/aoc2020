@@ -10,12 +10,16 @@ fn part1() {
     let lines = read_lines("input.txt").unwrap();
     let regex = create_regex();
     let policies_and_passwords = Vec::from_iter(lines.map(|line| read_line(&regex, &line.unwrap())));
-    let num_valid = policies_and_passwords.iter().filter(|x| is_valid(&x.0, &x.1)).count();
+    let num_valid = policies_and_passwords.iter().filter(|x| is_valid_old_policy(&x.0, &x.1)).count();
     println!("{num_valid}");
 }
 
 fn part2() {
-    println!("Part 2");
+    let lines = read_lines("input.txt").unwrap();
+    let regex = create_regex();
+    let policies_and_passwords = Vec::from_iter(lines.map(|line| read_line(&regex, &line.unwrap())));
+    let num_valid = policies_and_passwords.iter().filter(|x| is_valid_new_policy(&x.0, &x.1)).count();
+    println!("{num_valid}");
 }
 
 fn main() {
@@ -28,7 +32,6 @@ fn main() {
         _ => println!("Invalid part number"),
     }
 }
-
 
 fn create_regex() -> Regex {
     Regex::new(r"^(?<min>\d+)-(?<max>\d+) (?<char>.): (?<password>.+)$").unwrap()
@@ -47,9 +50,16 @@ fn read_line(re: &Regex, line: &str) -> (PasswordPolicy, String) {
     (policy, password)
 }
 
-fn is_valid(policy: &PasswordPolicy, password: &str) -> bool {
+fn is_valid_old_policy(policy: &PasswordPolicy, password: &str) -> bool {
     let count = password.chars().filter(|c| *c == policy.character).count() as i32;
     count >= policy.min && count <= policy.max
+}
+
+fn is_valid_new_policy(policy: &PasswordPolicy, password: &str) -> bool {
+    let match1 = password.chars().nth((policy.min - 1) as usize).unwrap() == policy.character;
+    let match2 = password.chars().nth((policy.max - 1) as usize).unwrap() == policy.character;
+
+    (match1 && !match2) || (!match1 && match2)
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
