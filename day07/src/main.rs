@@ -31,7 +31,10 @@ fn part1(lines: &Vec<String>) {
 }
 
 fn part2(lines: &Vec<String>) {
-    println!("Part 2");
+    let rules = parse_rules(lines);
+
+    let count = count_bags(&rules, "shiny gold") - 1;
+    println!("{count}")
 }
 
 fn parse_rules(lines: &Vec<String>) -> HashMap<String, HashMap<String, u8>> {
@@ -72,6 +75,16 @@ fn parse_contents(re: &Regex, contents: &str) -> HashMap<String, u8> {
         .collect::<HashMap<String, u8>>();
 
     map
+}
+
+fn count_bags(rules: &HashMap<String, HashMap<String, u8>>, bag: &str) -> u64{
+    let contents = &rules.get(bag).unwrap();
+
+    let count: u64 = contents.iter()
+        .map(|x| (*x.1 as u64) * count_bags(rules, x.0))
+        .sum();
+
+    count + 1
 }
 
 fn main() {
