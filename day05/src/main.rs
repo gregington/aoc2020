@@ -1,3 +1,5 @@
+use itertools::Itertools;
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io;
@@ -6,16 +8,33 @@ use std::path::Path;
 use std::vec::Vec;
 
 fn part1(lines: &Vec<String>) {
-    let boarding_passes = lines.into_iter().map(|line| create_boarding_pass(line));
-    let max_id = boarding_passes.map(|x| calculate_seat_id(&x)).max().unwrap();
+    let boarding_passes = lines.into_iter().map(|line| create_boarding_pass_from_line(line));
+    let max_id = boarding_passes.map(|x| x.id).max().unwrap();
     println!("{max_id}");
 }
 
 fn part2(lines: &Vec<String>) {
+    let boarding_passes = &lines.into_iter().map(|line| create_boarding_pass_from_line(line)).collect::<Vec<_>>();
+    let min_row = boarding_passes.into_iter().map(|bp| bp.row).min().unwrap();
+    let max_row = boarding_passes.into_iter().map(|bp| bp.row).max().unwrap();
 
+    let rows = min_row+1..max_row;
+    let columns = 0 as u8..8;
+
+    let mut boarding_passes_by_id = rows.cartesian_product(columns)
+        .map(|x| create_boarding_pass(x.0, x.1))
+        .map(|bp| (bp.id, bp))
+        .collect::<HashMap<u16, BoardingPass>>();
+
+    boarding_passes.into_iter().for_each(|bp| {
+        boarding_passes_by_id.remove(&bp.id);
+    });
+
+    let seat_id = boarding_passes_by_id.iter().next().unwrap().0;
+    println!("{seat_id}");
 }
 
-fn create_boarding_pass(line: &str) -> BoardingPass {
+fn create_boarding_pass_from_line(line: &str) -> BoardingPass {
     let row = &line[..7];
     let column = &line[7..];
 
@@ -29,15 +48,17 @@ fn create_boarding_pass(line: &str) -> BoardingPass {
         .reduce(|acc, a| (acc << 1) | a)
         .unwrap();
 
-    BoardingPass {
-        row, 
-        column 
-    }
+    create_boarding_pass(row, column)
 }
 
-fn calculate_seat_id(boarding_pass: &BoardingPass) -> u64
-{
-    (boarding_pass.row as u64 * 8) + boarding_pass.column as u64
+fn create_boarding_pass(row: u8, column: u8) -> BoardingPass {
+    let id: u16 = (row as u16 * 8) + column as u16;
+
+    BoardingPass {
+        row, 
+        column,
+        id
+    }
 }
 
 fn main() {
@@ -67,5 +88,6 @@ where P: AsRef<Path>, {
 
 struct BoardingPass {
     row: u8,
-    column: u8
+    column: u8,
+    id: u16
 }
