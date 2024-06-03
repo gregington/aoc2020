@@ -6,13 +6,19 @@ use std::env;
 use std::io::BufRead;
 use std::path::Path;
 
+const STEP_DIRECTIONS: [(i32, i32); 8] = [
+    (-1, -1), (0, -1), (1, -1),
+    (-1,  0),          (1,  0),
+    (-1,  1), (0,  1), (1,  1)
+];
+
 fn part1(grid: &Vec<Vec<char>>) {
     let mut current_grid = grid.clone();
     let mut prev_grid: Vec<Vec<char>>;
 
     loop {
         prev_grid = current_grid.clone();
-        current_grid = step_grid(&prev_grid);
+        current_grid = step_grid(&prev_grid, get_neighbors_part1, 4);
 
         if grids_equal(&prev_grid, &current_grid) {
             break;
@@ -24,17 +30,30 @@ fn part1(grid: &Vec<Vec<char>>) {
 }
 
 fn part2(grid: &Vec<Vec<char>>) {
-    println!("Part 2");
+    let mut current_grid = grid.clone();
+    let mut prev_grid: Vec<Vec<char>>;
+
+    loop {
+        prev_grid = current_grid.clone();
+        current_grid = step_grid(&prev_grid, get_neighbors_part2, 5);
+
+        if grids_equal(&prev_grid, &current_grid) {
+            break;
+        }
+    }
+
+    let num_occupied: i32 = current_grid.iter().map(|row| row.iter().filter(|x| **x == '#').count() as i32).sum();
+    println!("{num_occupied}");
 }
 
-fn step_grid(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
+fn step_grid(grid: &Vec<Vec<char>>, neighbors_fn: fn(&Vec<Vec<char>>, i32, i32) -> Vec<char>, occupied_threshold: i32) -> Vec<Vec<char>> {
     let mut new_grid: Vec<Vec<char>> = grid.clone();
     let num_cols = new_grid[0].len() as i32;
     let num_rows = new_grid.len() as i32;
 
     for row in 0..num_rows {
         for col in 0..num_cols {
-            let neighbors = get_neighbors(&grid, row, col);
+            let neighbors = neighbors_fn(&grid, row, col);
 
             let seat = grid[row as usize][col as usize];
             let new_seat: char;
@@ -46,7 +65,7 @@ fn step_grid(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
                     new_seat = 'L'
                 }
             } else if seat == '#' {
-                if neighbors.iter().filter(|x| **x == '#').count() >= 4 {
+                if neighbors.iter().filter(|x| **x == '#').count() as i32 >= occupied_threshold {
                     new_seat = 'L';
                 } else {
                     new_seat = '#';
@@ -62,7 +81,7 @@ fn step_grid(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
     new_grid
 }
 
-fn get_neighbors(grid: &Vec<Vec<char>>, row: i32, col: i32) -> Vec<char> {
+fn get_neighbors_part1(grid: &Vec<Vec<char>>, row: i32, col: i32) -> Vec<char> {
     let mut neighbors: Vec<char> = Vec::with_capacity(8);
 
     let num_cols = grid[0].len() as i32;
@@ -79,6 +98,36 @@ fn get_neighbors(grid: &Vec<Vec<char>>, row: i32, col: i32) -> Vec<char> {
             }
             neighbors.push(grid[r as usize][c as usize]);
         }
+    }
+
+    neighbors
+}
+
+fn get_neighbors_part2 (grid: &Vec<Vec<char>>, row: i32, col: i32) -> Vec<char> {
+    let mut neighbors: Vec<char> = Vec::with_capacity(8);
+
+    let num_cols = grid[0].len() as i32;
+    let num_rows = grid.len() as i32;
+
+    for step_direction in STEP_DIRECTIONS {
+        let (row_step, col_step) = step_direction;
+        let mut r = row;
+        let mut c = col;
+        let mut val = '.';
+
+        loop {
+            r += row_step;
+            c += col_step;
+            if r < 0 || r >= num_rows || c < 0 || c >= num_cols {
+                break;
+            }
+            let grid_val = grid[r as usize][c as usize];
+            if grid_val == 'L' || grid_val == '#' {
+                val = grid_val;
+                break;
+            }
+        }
+        neighbors.push(val);
     }
 
     neighbors
