@@ -2,27 +2,62 @@ use std::{collections::HashSet, env, fs::File, io::{self, BufRead}, path::Path};
 
 fn part1(lines: &Vec<String>) {
     let instructions = parse_instructions(&lines);
-    let acc = find_acc_at_loop(&instructions);
+    let result = execute_instructions(&instructions);
+    let acc = result.1;
     println!("{acc}");
 }
 
 fn part2(lines: &Vec<String>) {
-    println!("Part 2")
+    let instructions = parse_instructions(&lines);
+
+    for i in 0..instructions.len() {
+        let instruction = instructions[i].clone();
+
+        if instruction.operation == Operation::Acc {
+            continue;
+        }
+
+        let mut new_instructions = instructions.clone();
+        let new_instruction = match instruction.operation {
+            Operation::Nop => Instruction {
+                operation: Operation::Jmp,
+                argument: instruction.argument
+            },
+            Operation::Jmp => Instruction {
+                operation: Operation::Nop,
+                argument: instruction.argument
+            },
+            _ => panic!("Unexpected operation")
+        };
+
+        new_instructions[i] = new_instruction;
+
+        let result = execute_instructions(&new_instructions);
+        if result.0 {
+            let acc = result.1;
+            println!("{acc}");
+            break;
+        }
+    }
 }
 
 fn parse_instructions(lines: &Vec<String>) -> Vec<Instruction> {
     lines.iter().map(|line| parse_instruction(line)).collect::<Vec<Instruction>>()
 }
 
-fn find_acc_at_loop(instructions: &Vec<Instruction>) -> i64 {
+fn execute_instructions(instructions: &Vec<Instruction>) -> (bool, i64) {
     let mut acc: i64 = 0;
     let mut ip: i16 = 0;
     let mut executed_instructions: HashSet<i16> = HashSet::new();
     
     loop {
         if executed_instructions.contains(&ip) {
-            break;
+            return (false, acc);
         }
+        if ip == instructions.len() as i16 {
+            return (true, acc);
+        }
+
         let instruction = &instructions[ip as usize];
         
         executed_instructions.insert(ip);
@@ -40,8 +75,6 @@ fn find_acc_at_loop(instructions: &Vec<Instruction>) -> i64 {
             }
         }
     }
-
-    acc
 }
 
 fn parse_instruction(line: &str) -> Instruction {
@@ -86,11 +119,13 @@ where P: AsRef<Path>, {
     Ok(io::BufReader::new(file).lines())
 }
 
+#[derive(Clone, Copy)]
 struct Instruction {
     operation: Operation,
     argument: i16
 }
 
+#[derive(Clone, Copy, PartialEq)]
 enum Operation {
     Acc,
     Jmp,
