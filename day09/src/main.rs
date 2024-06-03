@@ -1,4 +1,10 @@
-use std::{cmp::{max, min}, collections::HashSet, env, fs::File, io::{self, BufRead}, path::Path};
+use std::path::Path;
+use std::io::BufRead;
+use std::io;
+use std::fs::File;
+use std::env;
+use std::collections::HashSet;
+use std::cmp::{max, min};
 
 fn part1(lines: &Vec<String>, memory: i32) {
     let numbers = read_numbers(lines);
