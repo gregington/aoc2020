@@ -1,3 +1,4 @@
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
 use std::io::BufRead;
@@ -16,7 +17,39 @@ fn part1(lines: &Vec<String>) {
 }
 
 fn part2(lines: &Vec<String>) {
-    println!("Part 2");
+    let mut numbers = read_numbers(lines);
+    numbers.push(0);
+    numbers.sort_unstable();
+    numbers.push(numbers.last().unwrap() + 3);
+
+    let num_set: HashSet<i64> = HashSet::from_iter(numbers.iter().cloned());
+
+    let target = numbers.last().unwrap() + 3;
+    let mut cache: HashMap<i64, i64> = HashMap::new();
+
+    let num_combinations = find_num_combinations(&num_set, &mut cache, target, 0);
+    println!("{num_combinations}");
+}
+
+fn find_num_combinations(numbers: &HashSet<i64>, cache: &mut HashMap<i64, i64>, target: i64, num: i64) -> i64 {
+    if cache.contains_key(&num) {
+        return cache[&num];
+    }
+
+    let mut count: i64 = 0;
+
+    if num == target {
+        count = 1;
+    } else if num < target {
+        for next in num + 1..=num + 3 {
+            if numbers.contains(&num) {
+                count += find_num_combinations(numbers, cache, target, next);
+            }
+        }
+    }
+
+    cache.insert(num, count);
+    count
 }
 
 fn count_differences(numbers: &[i64]) -> (i64, i64) {
