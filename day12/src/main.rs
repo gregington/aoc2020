@@ -6,21 +6,24 @@ use std::path::Path;
 
 fn part1(lines: &Vec<String>) {
     let instructions = parse_instructions(lines);
-    let (x, y) = navigate(&instructions, (0, 0), 90);
-    let sum = x.abs() + y.abs();
-    println!("{sum}");
+    let start = (0, 0);
+    let end = navigate(&instructions, start);
+    let distance = manhattan_distance(end, start);
+    println!("{distance}");
 }
 
 fn part2(lines: &Vec<String>) {
-    println!("Part 2");
+    let instructions = parse_instructions(lines);
+    let start = (0, 0);
+    let end = navigate_with_waypoint(&instructions, start);
+    let distance = manhattan_distance(end, start);
+    println!("{distance}");
 }
 
-fn navigate(instructions: &[Instruction], start_pos: (i32, i32), start_dir: i32) -> (i32, i32) {
-    let mut x;
-    let mut y;
-    let mut direction = start_dir;
-    (x, y) = start_pos;
-
+fn navigate(instructions: &[Instruction], start_pos: (i32, i32)) -> (i32, i32) {
+    let mut x = start_pos.0;
+    let mut y = start_pos.1;
+    let mut direction = 90;
 
     for instruction in instructions {
         match instruction.action {
@@ -44,6 +47,45 @@ fn navigate(instructions: &[Instruction], start_pos: (i32, i32), start_dir: i32)
     }
 
     (x, y)
+}
+
+fn navigate_with_waypoint(instructions: &[Instruction], start_pos: (i32, i32)) -> (i32, i32) {
+    let mut x = start_pos.0;
+    let mut y = start_pos.1;
+    let mut waypoint_x = 10;
+    let mut waypoint_y = 1;
+
+    for instruction in instructions {
+        match instruction.action {
+            'N' => waypoint_y += instruction.value,
+            'S' => waypoint_y -= instruction.value,
+            'E' => waypoint_x += instruction.value,
+            'W' => waypoint_x -= instruction.value,
+            'L' => {
+                let num_rotations = instruction.value / 90;
+                for _ in 0..num_rotations {
+                    (waypoint_x, waypoint_y) = (-waypoint_y, waypoint_x)
+                }
+            },
+            'R' => {
+                let num_rotations = instruction.value / 90;
+                for _ in 0..num_rotations {
+                    (waypoint_x, waypoint_y) = (waypoint_y, -waypoint_x)
+                }
+            },
+            'F' => {
+                x += waypoint_x * instruction.value;
+                y += waypoint_y * instruction.value;
+            },
+            _ => panic!("Unknown action")
+        }
+    }
+
+    (x, y)
+}
+
+fn manhattan_distance(a: (i32, i32), b: (i32, i32)) -> i32 {
+    (a.0 - b.0).abs() + (a.1 - b.1).abs()
 }
 
 fn parse_instructions(lines: &Vec<String>) -> Vec<Instruction> {
