@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::path::Path;
 use std::io::BufRead;
 use std::io;
@@ -11,7 +11,8 @@ fn part1(numbers: &[i32]) {
 }
 
 fn part2(numbers: &[i32]) {
-    println!("Part 2");
+    let num_spoken = play(numbers, 30000000);
+    println!("{num_spoken}");
 }
 
 fn play(numbers: &[i32], count: i32) -> i32 {
