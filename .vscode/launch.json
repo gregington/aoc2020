@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Debug",
             "program": "${workspaceFolder}/day16/target/debug/day16",
-            "args": ["1", "example.txt"],
+            "args": ["2", "example2.txt"],
             "cwd": "${workspaceFolder}/day16"
         }
     ]

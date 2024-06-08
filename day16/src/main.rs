@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io;
 use std::ops::Range;
@@ -14,7 +14,19 @@ fn part1(input: &Input) {
 }
 
 fn part2(input: &Input) {
-    println!("Part 2");
+    let valid_nearby_tickets = find_valid_nearby_tickets(input);
+    let field_mappings = find_field_mappings(&input.fields, valid_nearby_tickets);
+
+    let departure_cols: Vec<u32> = field_mappings.iter()
+        .filter(|x| x.0.starts_with("departure"))
+        .map(|x| *x.1)
+        .collect();
+
+    let val: u64 = departure_cols.iter()
+        .map(|c| input.my_ticket[*c as usize] as u64)
+        .product();
+
+    println!("{val}");
 }
 
 fn find_invalid_fields(input: &Input) -> Vec<u32> {
@@ -27,6 +39,72 @@ fn find_invalid_fields(input: &Input) -> Vec<u32> {
         }
     }
     invalid
+}
+
+fn find_valid_nearby_tickets(input: &Input) -> Vec<Vec<u32>> {
+    let mut valid = Vec::new();
+
+    for ticket in &input.nearby_tickets {
+        let invalid_values: Vec<&u32> = ticket.iter().filter(|x| input.fields.values().all(|f| !f[0].contains(*x) && !f[1].contains(*x))).collect();
+        if invalid_values.is_empty() {
+            valid.push(ticket.clone());
+        }
+    }
+
+    valid
+}
+
+fn find_field_mappings(fields: &HashMap<String, [Range<u32>; 2]>, tickets: Vec<Vec<u32>>) -> HashMap<String, u32> {
+    let mut results = HashMap::new();
+    let field_vals = transpose(&tickets);
+
+    let mut fields_remaining: HashSet<&String> = HashSet::from_iter(fields.keys());
+    let mut cols_remaining: HashSet<u32> = (0..field_vals.len() as u32).collect();
+
+    while !fields_remaining.is_empty() {
+        let mut all_candidates: HashMap<String, Vec<u32>> = HashMap::new();
+
+        for field in fields_remaining.clone() {
+            let mut candidates: Vec<u32> = Vec::new();
+            let range0 = &fields[field][0];
+            let range1 = &fields[field][1];
+
+            for col in cols_remaining.iter() {
+                if field_vals[*col as usize].iter().all(|v| range0.contains(v) || range1.contains(v)) {
+                    candidates.push(*col);
+                }
+            }
+
+            all_candidates.insert(field.clone(), candidates);
+        }
+
+        let matched_candidates: HashMap<String, Vec<u32>> = all_candidates.iter()
+            .filter(|x| x.1.len() == 1)
+            .map(|x| (x.0.clone(), x.1.clone()))
+            .collect();
+
+            for matched in matched_candidates.iter() {
+            fields_remaining.remove(matched.0);
+            cols_remaining.remove(&matched.1[0]);
+            results.insert((*matched.0).clone(), matched.1[0]);
+        }
+    }
+
+    results
+}
+
+fn transpose(input: &Vec<Vec<u32>>) -> Vec<Vec<u32>> {
+    let mut results = Vec::new();
+
+    for i in 0..input[0].len() {
+        let mut row = Vec::new();
+        for j in 0..input.len() {
+            row.push(input[j][i])
+        }
+        results.push(row);
+    }
+
+    results
 }
 
 fn main() {
