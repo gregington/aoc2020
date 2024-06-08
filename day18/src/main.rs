@@ -5,15 +5,16 @@ use std::io::BufRead;
 use std::path::Path;
 
 fn part1(lines: &Vec<String>) {
-    let sum: u64 = lines.iter().map(|expr| evaluate(expr)).sum();
+    let sum: u64 = lines.iter().map(|expr| evaluate(expr, parse_operator)).sum();
     println!("{sum}");
 }
 
 fn part2(lines: &Vec<String>) {
-    println!("Part 2");
+    let sum: u64 = lines.iter().map(|expr| evaluate(expr, parse_operator_precedence)).sum();
+    println!("{sum}");
 }
 
-fn evaluate(expr: &str) -> u64 {
+fn evaluate(expr: &str, parse_operator_fn: fn(&str) -> (&str, char, &str)) -> u64 {
     let expr = expr.trim();
 
     let parsed = expr.parse::<u64>();
@@ -23,14 +24,14 @@ fn evaluate(expr: &str) -> u64 {
 
     if expr.starts_with('(') {
         let closing_brace_idx = find_closing_brace_idx(&expr);
-        let lhs = evaluate(&expr[1..closing_brace_idx]);        
-        return evaluate(&format!("{} {}", lhs, &expr[closing_brace_idx + 1..]))
+        let lhs = evaluate(&expr[1..closing_brace_idx], parse_operator_fn);        
+        return evaluate(&format!("{} {}", lhs, &expr[closing_brace_idx + 1..]), parse_operator_fn)
     }
 
-    let (lhs, operator, rhs) = parse_operator(expr);
+    let (lhs, operator, rhs) = parse_operator_fn(expr);
 
-    let lhs = evaluate(lhs);
-    let rhs = evaluate(rhs);
+    let lhs = evaluate(lhs, parse_operator_fn);
+    let rhs = evaluate(rhs, parse_operator_fn);
 
     if operator == '+' {
         return lhs + rhs;
@@ -72,6 +73,36 @@ fn parse_operator(expr: &str) -> (&str, char, &str) {
             return (&expr[..idx], expr[idx..=idx].chars().next().unwrap(), &expr[idx+2..])
         }
     }
+
+    panic!("Reached end of string");
+}
+
+fn parse_operator_precedence(expr: &str) -> (&str, char, &str) {
+    let chars: Vec<char> = expr.chars().collect();
+    let mut brace_count = 0;
+    for idx in (0..chars.len()).rev() {
+        let c = chars[idx];
+        if c == '(' {
+            brace_count += 1;
+        } else if c == ')' {
+            brace_count -= 1;
+        } else if brace_count == 0 && c == '*' {
+            return (&expr[..idx], expr[idx..=idx].chars().next().unwrap(), &expr[idx+2..])
+        }
+    }
+
+    brace_count = 0;
+    for idx in (0..chars.len()).rev() {
+        let c = chars[idx];
+        if c == '(' {
+            brace_count += 1;
+        } else if c == ')' {
+            brace_count -= 1;
+        } else if brace_count == 0 && c == '+' {
+            return (&expr[..idx], expr[idx..=idx].chars().next().unwrap(), &expr[idx+2..])
+        }
+    }
+
     panic!("Reached end of string");
 }
 
